@@ -60,7 +60,7 @@ export function AppHeader({ breadcrumbs = [] }) {
                         </Sheet>
                     </div>
 
-                    <Link href="/dashboard" prefetch className="flex items-center space-x-2">
+                    <Link href={route('home')} prefetch className="flex items-center space-x-2">
                         <AppLogo />
                     </Link>
 

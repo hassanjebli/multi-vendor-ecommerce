@@ -10,12 +10,12 @@ const breadcrumbs = [
     },
 ];
 
-export default function Welcome() {
+export default function Home() {
     const { auth } = usePage().props;
 
     return (
         <>
-            <Head title="Welcome" />
+            <Head title="Home" />
             <AppLayout breadcrumbs={breadcrumbs}>
                 {/* Hero Section */}
                 <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30">
