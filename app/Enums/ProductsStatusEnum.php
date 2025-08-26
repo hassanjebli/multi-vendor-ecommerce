@@ -10,8 +10,8 @@ enum ProductsStatusEnum: string
   public static function labels(): array
   {
     return [
-      self::Draft->value => _('Draft'),
-      self::Published->value => _('Published'),
+      self::Draft->value => 'Draft',
+      self::Published->value => 'Published',
     ];
   }
 

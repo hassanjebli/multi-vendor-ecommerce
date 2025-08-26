@@ -27,12 +27,13 @@ use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\ProductImages;
 use App\Filament\Resources\Products\Tables\ProductsTable;
+use Filament\Tables\Columns\SpatieMediaLibraryImageColumn;
 
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
 
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-s-inbox-stack';
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-cube';
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::End;
 
     protected static ?string $recordTitleAttribute = 'title';
@@ -72,21 +73,11 @@ class ProductResource extends Resource
             RichEditor::make('description')
                 ->required()
                 ->toolbarButtons([
-                    'blockquote',
-                    'bold',
-                    'italic',
-                    'strike',
-                    'underline',
-                    'h1',
-                    'h2',
-                    'h3',
-                    'bulletList',
-                    'orderedList',
-                    'link',
-                    'codeBlock',
-                    'redo',
-                    'undo',
-                    'table',
+                    ['bold', 'italic', 'underline', 'strike', 'subscript', 'superscript', 'link'],
+                    ['h2', 'h3', 'alignStart', 'alignCenter', 'alignEnd'],
+                    ['blockquote', 'codeBlock', 'bulletList', 'orderedList'],
+                    ['table', 'attachFiles'],
+                    ['undo', 'redo'],
                 ])
                 ->columnSpanFull(),
 
@@ -108,6 +99,12 @@ class ProductResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->columns([
+
+            SpatieMediaLibraryImageColumn::make('images')
+                ->collection('images')
+                ->limit(1)
+                ->conversion('thumb')
+                ->label('Image'),
             TextColumn::make('title')
                 ->sortable()
                 ->words(10)
