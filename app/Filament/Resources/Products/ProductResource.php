@@ -15,9 +15,11 @@ use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\ProductImages;
+use App\Filament\Resources\Products\Pages\ProductVariations;
+use App\Filament\Resources\Products\Pages\ProductVariationTypes;
 use App\Filament\Resources\Products\Schemas\ProductForm;
 use App\Filament\Resources\Products\Tables\ProductsTable;
-
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductResource extends Resource
 {
@@ -28,10 +30,14 @@ class ProductResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'title';
 
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->forVendor();
+    }
+
     public static function form(Schema $schema): Schema
     {
         return ProductForm::configure($schema);
-
     }
 
     public static function table(Table $table): Table
@@ -52,7 +58,9 @@ class ProductResource extends Resource
             'index' => ListProducts::route('/'),
             'create' => CreateProduct::route('/create'),
             'edit' => EditProduct::route('/{record}/edit'),
-            'images' => ProductImages::route('/{record}/images')
+            'images' => ProductImages::route('/{record}/images'),
+            'variation-types' => ProductVariationTypes::route('/{record}/variation-types'),
+            'variations' => ProductVariations::route('/{record}/variations'),
         ];
     }
 
@@ -61,6 +69,8 @@ class ProductResource extends Resource
         return $page->generateNavigationItems([
             EditProduct::class,
             ProductImages::class,
+            ProductVariationTypes::class,
+            ProductVariations::class,
         ]);
     }
 
