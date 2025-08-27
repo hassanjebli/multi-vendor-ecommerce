@@ -22,65 +22,65 @@ use Filament\Tables\Table;
 
 class CategoriesRelationManager extends RelationManager
 {
-  protected static string $relationship = 'categories';
+    protected static string $relationship = 'categories';
 
-  public function form(Schema $schema): Schema
-  {
-    $department = $this->getOwnerRecord();
-    return $schema
-      ->components([
-        TextInput::make('name')
-          ->required()
-          ->maxLength(255),
-        Select::make('parent_id')
-          ->options(function () use ($department) {
-            return Category::query()
-              ->where('department_id', $department->id)
-              ->pluck('name', 'id')
-              ->toArray();
-          })
-          ->label('Parent Category')
-          ->preload()
-          ->searchable(),
-        Checkbox::make('active')
-          ->default(true)
-      ]);
-  }
+    public function form(Schema $schema): Schema
+    {
+        $department = $this->getOwnerRecord();
+        return $schema
+            ->components([
+                TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
+                Select::make('parent_id')
+                    ->options(function () use ($department) {
+                        return Category::query()
+                            ->where('department_id', $department->id)
+                            ->pluck('name', 'id')
+                            ->toArray();
+                    })
+                    ->label('Parent Category')
+                    ->preload()
+                    ->searchable(),
+                Checkbox::make('active')
+                    ->default(true)
+            ]);
+    }
 
-  public function table(Table $table): Table
-  {
-    return $table
-      ->recordTitleAttribute('name')
-      ->columns([
-        TextColumn::make('name')
-          ->searchable()
-          ->sortable()
-          ->searchable(),
-        TextColumn::make('parent.name')
-          ->sortable()
-          ->default('No Parent')
-          ->searchable(),
-        IconColumn::make('active')
-          ->boolean()
-          ->sortable(),
-      ])
-      ->filters([
-        //
-      ])
-      ->headerActions([
-        CreateAction::make(),
-        AssociateAction::make(),
-      ])
-      ->recordActions([
-        EditAction::make(),
-        DissociateAction::make(),
-        DeleteAction::make(),
-      ])
-      ->toolbarActions([
-        BulkActionGroup::make([
-          DissociateBulkAction::make(),
-          DeleteBulkAction::make(),
-        ]),
-      ]);
-  }
+    public function table(Table $table): Table
+    {
+        return $table
+            ->recordTitleAttribute('name')
+            ->columns([
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('parent.name')
+                    ->sortable()
+                    ->default('No Parent')
+                    ->searchable(),
+                IconColumn::make('active')
+                    ->boolean()
+                    ->sortable(),
+            ])
+            ->filters([
+                //
+            ])
+            ->headerActions([
+                CreateAction::make(),
+                AssociateAction::make(),
+            ])
+            ->recordActions([
+                EditAction::make(),
+                DissociateAction::make(),
+                DeleteAction::make(),
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DissociateBulkAction::make(),
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
 }

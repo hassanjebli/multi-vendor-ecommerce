@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\Departments\Schemas;
 
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 class DepartmentForm
 {
@@ -13,15 +14,17 @@ class DepartmentForm
         return $schema
             ->components([
                 TextInput::make('name')
-                    ->required(),
+                    ->required()
+                    ->live(onBlur: true)
+                    ->afterStateUpdated(function (string $operation, $state, callable $set) {
+                        $set('slug', Str::slug($state));
+                    }),
                 TextInput::make('slug')
                     ->required(),
-                TextInput::make('meta_title')
-                    ->required(),
-                TextInput::make('meta_description')
-                    ->required(),
-                Toggle::make('active')
-                    ->required(),
+                Checkbox::make('active')
+                    ->required()
+                    ->default(true),
+
             ]);
     }
 }
