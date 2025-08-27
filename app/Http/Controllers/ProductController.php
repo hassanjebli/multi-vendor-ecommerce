@@ -2,17 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProductListResource;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class ProductController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function home()
     {
-        //
+        $products = Product::query()
+            ->published()
+            ->paginate(12);
+
+        return Inertia::render('home', [
+            'products' => ProductListResource::collection($products),
+        ]);
     }
 
     /**
