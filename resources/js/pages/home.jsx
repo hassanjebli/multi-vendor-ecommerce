@@ -1,9 +1,6 @@
 import ProductItem from '@/components/app/ProductItem';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { AlertCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowRight, CheckCircle, Play, Star } from 'lucide-react';
 
@@ -87,26 +84,11 @@ export default function Home({ products }) {
                         </div>
                     </div>
                 </section>
-                {products.data.length > 0 ? (
+                {products.data.length > 0 && (
                     <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                         {products.data.map((product) => (
                             <ProductItem key={product.id} product={product} />
                         ))}
-                    </div>
-                ) : (
-                    <div className="mt-8 mb-8 flex items-center justify-center">
-                        <Card className="w-full max-w-md bg-gray-50 text-center shadow-md dark:bg-gray-900">
-                            <CardHeader>
-                                <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-                                <CardTitle className="mt-2 text-lg font-semibold">No Products Found</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <CardDescription className="text-gray-600 dark:text-gray-400">
-                                    We couldn’t find any products at the moment. Please check back later or explore other categories.
-                                </CardDescription>
-                                <Badge className="mt-4 px-4 py-2">Explore Categories</Badge>
-                            </CardContent>
-                        </Card>
                     </div>
                 )}
             </AppLayout>

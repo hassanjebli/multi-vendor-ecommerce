@@ -1,9 +1,9 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-
 import CurrencyFormatter from '@/components/app/CurrencyFormatter';
 import ProductCarousel from '@/components/app/ProductCarousel';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app/app-header-layout';
 import { arraysAreEqual } from '@/lib/utils.js';
@@ -19,19 +19,19 @@ const show = ({ product, variationOptions }) => {
     });
 
     const { url } = usePage();
-
-    const [selectedOptions, setSelectedOptions] = useState([]);
+    const [selectedOptions, setSelectedOptions] = useState({});
 
     const images = useMemo(() => {
         for (let typeId in selectedOptions) {
             const option = selectedOptions[typeId];
-            if (option.images && option.images.length > 0) {
+            if (option?.images?.length > 0) {
                 return option.images;
             }
         }
         return product.images;
     }, [product, selectedOptions]);
 
+    // Calculate price and quantity based on selected variations
     const computedProduct = useMemo(() => {
         const selectedOptionIds = Object.values(selectedOptions)
             .map((opt) => opt.id)
@@ -50,36 +50,28 @@ const show = ({ product, variationOptions }) => {
         return { price: product.price, quantity: product.quantity };
     }, [product, selectedOptions]);
 
+    // Initialize selected options on component mount
     useEffect(() => {
-        // Parse URL parameters to get selected options
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlOptions = {};
-
-        // Extract options from URL in format options[typeId]=optionId
-        for (let [key, value] of urlParams.entries()) {
-            const match = key.match(/^options\[(\d+)\]$/);
-            if (match) {
-                const typeId = match[1];
-                urlOptions[typeId] = parseInt(value);
-            }
-        }
-
-        // Initialize selected options based on URL or fallback to first option
         for (let type of product.variationTypes) {
-            const selectedOptionId = urlOptions[type.id] || variationOptions[type.id];
+            const selectedOptionId = variationOptions[type.id];
             const selectedOption = type.options.find((opt) => opt.id == selectedOptionId) || type.options[0];
             chooseOption(type.id, selectedOption, false);
         }
     }, []);
 
+    // Helper to create option IDs map - only include options for valid variation types
     const getOptionIdsMap = (newOptions) => {
-        return Object.fromEntries(
-            Object.entries(newOptions).map(([typeId, option]) => {
-                return [typeId, option.id];
-            }),
-        );
+        const optionIds = {};
+        // Only include options for variation types that exist in the product
+        product.variationTypes.forEach((type, index) => {
+            if (newOptions[type.id]) {
+                optionIds[index] = newOptions[type.id].id;
+            }
+        });
+        return optionIds;
     };
 
+    // Handle option selection and URL updates
     const chooseOption = (typeId, option, updateRouter = true) => {
         setSelectedOptions((prevSelectedOptions) => {
             const newOptions = {
@@ -87,37 +79,37 @@ const show = ({ product, variationOptions }) => {
                 [typeId]: option,
             };
 
-            // Update URL with proper SEO-friendly format without refreshing
             if (updateRouter) {
                 const optionIds = getOptionIdsMap(newOptions);
-
-                // Build query parameters object
                 const queryParams = {};
+
+                // Only add options that should be in URL
                 Object.entries(optionIds).forEach(([typeId, optionId]) => {
                     queryParams[`options[${typeId}]`] = optionId;
                 });
 
-                // Use Inertia.js router.visit with replace option to update URL without navigation
-                router.visit(window.location.pathname, {
-                    data: queryParams,
+                router.get(url, queryParams, {
                     preserveScroll: true,
                     preserveState: true,
                     replace: true,
-                    only: [], // Don't reload any data, just update URL
+                    only: ['product'], // Only reload product data, not the entire page
                 });
             }
+
             return newOptions;
         });
     };
 
+    // Handle quantity changes
     const handleQuantityChange = (delta) => {
         const newQuantity = Math.max(1, Math.min(computedProduct.quantity, form.data.quantity + delta));
         form.setData('quantity', newQuantity);
     };
 
+    // Handle add to cart
     const addToCart = (e) => {
         e.preventDefault();
-        form.post(route('cart.store'), {
+        form.post(route('cart.store', product.id), {
             preserveScroll: true,
             preserveState: true,
             onError: (err) => {
@@ -126,138 +118,112 @@ const show = ({ product, variationOptions }) => {
         });
     };
 
+    // Render product variation types
     const renderProductVariationTypes = () => {
         return (
             <>
                 {product.variationTypes.map((type) => (
-                    <div key={type.id}>
-                        {(() => {
-                            if (type.type === 'image') {
-                                return (
-                                    <div className="space-y-4">
-                                        <Label className="text-sm font-medium text-gray-900 dark:text-white">{type.name}</Label>
-                                        <div className="flex flex-wrap gap-3">
-                                            {type.options.map((option) => (
-                                                <div key={option.id} className="relative">
-                                                    <Button
-                                                        variant="ghost"
-                                                        className={`h-20 w-20 rounded-xl border-2 p-1 transition-all hover:scale-105 hover:shadow-md ${
-                                                            selectedOptions[type.id]?.id === option.id
-                                                                ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800'
-                                                                : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
-                                                        }`}
-                                                        onClick={() => chooseOption(type.id, option)}
-                                                        title={option.name}
-                                                    >
-                                                        {option.images && option.images.length > 0 && (
-                                                            <img
-                                                                src={option.images[0].thumb}
-                                                                alt={option.name}
-                                                                className="h-full w-full rounded-lg object-cover"
-                                                            />
-                                                        )}
-                                                    </Button>
-                                                    {selectedOptions[type.id]?.id === option.id && (
-                                                        <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 dark:bg-blue-600">
-                                                            <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path
-                                                                    fillRule="evenodd"
-                                                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                                    clipRule="evenodd"
-                                                                />
-                                                            </svg>
-                                                        </div>
-                                                    )}
-                                                    <p className="mt-2 max-w-20 truncate text-center text-xs text-gray-600 dark:text-gray-400">
-                                                        {option.name}
-                                                    </p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                );
-                            }
+                    <div key={type.id} className="space-y-4">
+                        <Label className="text-sm font-medium text-gray-900 dark:text-white">{type.name}</Label>
 
-                            if (type.type === 'radio') {
-                                return (
-                                    <div className="space-y-4">
-                                        <Label className="text-sm font-medium text-gray-900 dark:text-white">{type.name}</Label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {type.options.map((option) => (
-                                                <div
-                                                    key={option.id}
-                                                    className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md ${
-                                                        selectedOptions[type.id]?.id === option.id
-                                                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 dark:bg-blue-950 dark:ring-blue-800'
-                                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-800'
-                                                    }`}
-                                                    onClick={() => chooseOption(type.id, option)}
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex-1">
-                                                            <span className="text-sm font-medium text-gray-900 dark:text-white">{option.name}</span>
-                                                            {option.description && (
-                                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{option.description}</p>
-                                                            )}
-                                                        </div>
-                                                        <div
-                                                            className={`h-5 w-5 rounded-full border-2 transition-colors ${
-                                                                selectedOptions[type.id]?.id === option.id
-                                                                    ? 'border-blue-500 bg-blue-500'
-                                                                    : 'border-gray-300 dark:border-gray-600'
-                                                            }`}
-                                                        >
-                                                            {selectedOptions[type.id]?.id === option.id && (
-                                                                <div className="m-0.5 h-full w-full rounded-full bg-white"></div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    {selectedOptions[type.id]?.id === option.id && (
-                                                        <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 dark:bg-blue-600">
-                                                            <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                                <path
-                                                                    fillRule="evenodd"
-                                                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                                                    clipRule="evenodd"
-                                                                />
-                                                            </svg>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
+                        {type.type === 'image' && (
+                            <div className="flex flex-wrap gap-3">
+                                {type.options.map((option) => (
+                                    <div key={option.id} className="relative">
+                                        <Button
+                                            variant="ghost"
+                                            className={`h-20 w-20 rounded-xl border-2 p-1 transition-all hover:scale-105 hover:shadow-md ${
+                                                selectedOptions[type.id]?.id === option.id
+                                                    ? 'border-blue-500 shadow-lg ring-2 ring-blue-200 dark:ring-blue-800'
+                                                    : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                                            }`}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                chooseOption(type.id, option);
+                                            }}
+                                            title={option.name}
+                                        >
+                                            {option.images?.length > 0 && (
+                                                <img
+                                                    src={option.images[0].thumb}
+                                                    alt={option.name}
+                                                    className="h-full w-full rounded-lg object-cover"
+                                                />
+                                            )}
+                                        </Button>
+                                        {selectedOptions[type.id]?.id === option.id && (
+                                            <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 dark:bg-blue-600">
+                                                <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                        clipRule="evenodd"
+                                                    />
+                                                </svg>
+                                            </div>
+                                        )}
+                                        <p className="mt-2 max-w-20 truncate text-center text-xs text-gray-600 dark:text-gray-400">{option.name}</p>
                                     </div>
-                                );
-                            }
-                        })()}
+                                ))}
+                            </div>
+                        )}
+
+                        {type.type === 'radio' && (
+                            <RadioGroup
+                                value={selectedOptions[type.id]?.id?.toString()}
+                                onValueChange={(value) => {
+                                    const option = type.options.find((opt) => opt.id == value);
+                                    if (option) chooseOption(type.id, option);
+                                }}
+                            >
+                                <div className="grid grid-cols-2 gap-3">
+                                    {type.options.map((option) => (
+                                        <div
+                                            key={option.id}
+                                            className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-md ${
+                                                selectedOptions[type.id]?.id === option.id
+                                                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200 dark:bg-blue-950 dark:ring-blue-800'
+                                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 dark:border-gray-700 dark:hover:border-gray-600 dark:hover:bg-gray-800'
+                                            }`}
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                chooseOption(type.id, option);
+                                            }}
+                                        >
+                                            <div className="flex items-center space-x-3">
+                                                <RadioGroupItem value={option.id.toString()} id={`option-${option.id}`} />
+                                                <Label htmlFor={`option-${option.id}`} className="flex-1 cursor-pointer">
+                                                    <span className="text-sm font-medium">{option.name}</span>
+                                                    {option.description && (
+                                                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{option.description}</p>
+                                                    )}
+                                                </Label>
+                                            </div>
+                                            {selectedOptions[type.id]?.id === option.id && (
+                                                <div className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 dark:bg-blue-600">
+                                                    <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </RadioGroup>
+                        )}
                     </div>
                 ))}
             </>
         );
     };
 
-    const renderAddToCartButton = () => {
-        return (
-            <>
-
-                <Button
-                    className="h-12 w-full bg-blue-600 text-white hover:bg-blue-700 sm:flex-1"
-                    onClick={addToCart}
-                    disabled={computedProduct.quantity === 0}
-                >
-                    <ShoppingCart className="mr-2 h-5 w-5" />
-                    {computedProduct.quantity === 0 ? 'Out of Stock' : <>Add to Cart <ShoppingCart className="ml-2 h-5 w-5" /></>}
-                </Button>
-            </>
-        );
-    };
-
+    // Update form data when options change
     useEffect(() => {
-        const idsMap = Object.fromEntries(
-            Object.entries(selectedOptions).map(([typeId, option]) => {
-                return [typeId, option.id];
-            }),
-        );
+        const idsMap = getOptionIdsMap(selectedOptions);
         form.setData('option_ids', idsMap);
     }, [selectedOptions]);
 
@@ -327,11 +293,8 @@ const show = ({ product, variationOptions }) => {
                         <Separator />
 
                         {/* Description */}
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
-                            <div
-                                className="leading-relaxed text-gray-700 dark:text-gray-300"
-                                dangerouslySetInnerHTML={{ __html: product.description }}
-                            ></div>
+                        <div className="prose prose-lg dark:prose-invert max-w-none">
+                            <div dangerouslySetInnerHTML={{ __html: product.description }} />
                         </div>
 
                         <Separator className="my-6 border-gray-200 dark:border-gray-700" />
@@ -373,7 +336,14 @@ const show = ({ product, variationOptions }) => {
                                 </div>
 
                                 {/* Add to Cart */}
-                                {renderAddToCartButton()}
+                                <Button
+                                    className="h-12 w-full bg-blue-600 text-white hover:bg-blue-700 sm:flex-1"
+                                    onClick={addToCart}
+                                    disabled={computedProduct.quantity === 0}
+                                >
+                                    <ShoppingCart className="mr-2 h-5 w-5" />
+                                    {computedProduct.quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                                </Button>
                             </div>
 
                             {/* Buy Now */}

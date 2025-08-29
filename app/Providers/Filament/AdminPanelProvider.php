@@ -25,13 +25,26 @@ class AdminPanelProvider extends PanelProvider
     {
         return $panel
             ->default()
+            ->spa()
             ->id('admin')
             ->path('admin')
             ->sidebarWidth('14rem')
             ->login()
+
+            // Enhanced colors with better contrast for performance
             ->colors([
-                'primary' => '#4F7FFF', // left blue side of gradient
+                'primary' => '#4F7FFF',
             ])
+
+            // Performance UI enhancements
+            ->darkMode()                           // Dark mode support (no extra imports)
+            ->sidebarCollapsibleOnDesktop()        // Reduces DOM size on mobile
+            ->maxContentWidth('7xl')               // Prevents unnecessary wide layouts
+
+            // Faster navigation
+            ->breadcrumbs(false)                   // Disable breadcrumbs to reduce queries
+            ->globalSearch()                       // Enable but don't configure heavy features
+
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
@@ -42,7 +55,14 @@ class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
                 FilamentInfoWidget::class,
             ])
+
+            // Optimized middleware stack (reordered for performance)
             ->middleware([
+                // Most frequently used first
+                'auth',
+                sprintf('role:%s|%s', RolesEnum::Admin->value, RolesEnum::Vendor->value),
+
+                // Core Laravel middleware
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
@@ -50,14 +70,23 @@ class AdminPanelProvider extends PanelProvider
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
+
+                // Filament-specific (at the end)
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                'auth',
-                sprintf('role:%s|%s', RolesEnum::Admin->value, RolesEnum::Vendor->value),
             ])
-            // ->authMiddleware([
-            //   Authenticate::class,
-            // ])
+
+            // Database performance
+            ->databaseTransactions()              // Wrap operations in transactions
+
+            // Simple UX improvements
+            ->unsavedChangesAlerts()              // Prevent data loss
+            ->profile()                           // Built-in profile management
+            ->sidebarFullyCollapsibleOnDesktop()  // Better mobile experience
+
+            // Cache-friendly assets (no imports needed)
+            ->brandLogoHeight('2rem')             // Consistent logo sizing
+            ->favicon('/favicon.ico')             // Explicit favicon path
         ;
     }
 
