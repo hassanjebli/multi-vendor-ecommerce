@@ -7,6 +7,10 @@ use Inertia\Inertia;
 Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 
+Route::post('/cart/store/{product}', function () {
+    return;
+})->name('cart.store');
+
 Route::get('/shop', function () {
     return Inertia::render('shop');
 });

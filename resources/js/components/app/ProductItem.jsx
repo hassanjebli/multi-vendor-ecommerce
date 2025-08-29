@@ -4,12 +4,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, HeartIcon, MapPin, ShoppingCart } from 'lucide-react';
-import { useState } from 'react';
+import { Link } from '@inertiajs/react';
+import { Eye, HeartIcon, ShoppingCart } from 'lucide-react';
 
 const ProductCard = ({ product }) => {
-
-
     return (
         <div className="group relative max-w-md rounded-xl bg-gradient-to-r from-gray-100 to-gray-200 pt-0 shadow-lg transition-all duration-300 hover:shadow-xl dark:from-gray-800 dark:to-gray-900">
             {/* Product Image Container */}
@@ -38,25 +36,25 @@ const ProductCard = ({ product }) => {
                 )}
 
                 {/* Quick View Overlay */}
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/image:bg-black/10">
+                <Link
+                    href={route('products.show', { slug: product.slug })}
+                    aria-label={`View product ${product.name}`} // Optional but useful for accessibility
+                    className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover/image:bg-black/10"
+                >
                     <Button
                         size="sm"
                         variant="secondary"
-                        className="scale-90 bg-white/95 opacity-0 transition-all duration-200 group-hover/image:scale-100 group-hover/image:opacity-100 hover:bg-white dark:bg-gray-900/95 dark:hover:bg-gray-900"
-                        onClick={() => (window.location.href = `/products/${product.slug}`)}
+                        className="flex scale-90 items-center bg-white/95 opacity-0 transition-all duration-200 group-hover/image:scale-100 group-hover/image:opacity-100 hover:bg-white dark:bg-gray-900/95 dark:hover:bg-gray-900"
                     >
                         <Eye className="mr-1 h-3.5 w-3.5" />
                         View
                     </Button>
-                </div>
+                </Link>
             </div>
 
             {/* Wishlist Heart Button */}
-            <Button
-                size="icon"
-                className="bg-primary/10 hover:bg-primary/20 absolute end-4 top-4 rounded-full backdrop-blur-sm"
-            >
-                <HeartIcon className='size-4 stroke-white' />
+            <Button size="icon" className="bg-primary/10 hover:bg-primary/20 absolute end-4 top-4 rounded-full backdrop-blur-sm">
+                <HeartIcon className="size-4 stroke-white" />
                 <span className="sr-only">Like</span>
             </Button>
 
